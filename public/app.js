@@ -97,7 +97,130 @@ $('#qrErrorLevel').addEventListener('change', () => {
   }
 });
 
-const themeKey='qrscan-theme-v1',motionKey='qrscan-motion-v1';let settingsCloseTimer=0;function systemTheme(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}function applyTheme(choice,announce=true){const resolved=choice==='system'?systemTheme():choice;document.body.dataset.theme=resolved;document.documentElement.style.colorScheme=resolved;$$('[data-theme-choice]').forEach(b=>{const active=b.dataset.themeChoice===choice;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});try{localStorage.setItem(themeKey,choice);}catch(e){}const meta=$('meta[name="theme-color"]');if(meta)meta.content=resolved==='light'?'#f5f7fc':'#10131d';if(announce)toast((choice==='system'?'System':choice==='light'?'Light':'Dark')+' mode enabled');}function openSettings(){clearTimeout(settingsCloseTimer);const panel=$('#settingsPanel'),backdrop=$('#settingsBackdrop');panel.hidden=false;backdrop.hidden=false;panel.classList.remove('is-closing');panel.setAttribute('aria-hidden','false');backdrop.setAttribute('aria-hidden','false');requestAnimationFrame(()=>{backdrop.classList.add('is-open');panel.classList.add('is-open');});document.body.classList.add('settings-open');$('#settingsToggle').setAttribute('aria-expanded','true');setTimeout(()=>$('#settingsClose').focus(),80);}function closeSettings(){const panel=$('#settingsPanel'),backdrop=$('#settingsBackdrop');if(panel.hidden)return;panel.classList.remove('is-open');panel.classList.add('is-closing');backdrop.classList.remove('is-open');panel.setAttribute('aria-hidden','true');$('#settingsToggle').setAttribute('aria-expanded','false');document.body.classList.remove('settings-open');clearTimeout(settingsCloseTimer);settingsCloseTimer=setTimeout(()=>{panel.hidden=true;backdrop.hidden=true;panel.classList.remove('is-closing');},360);$('#settingsToggle').focus({preventScroll:true});}$('#settingsToggle').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);$('#settingsBackdrop').addEventListener('click',closeSettings);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#settingsPanel').hidden)closeSettings();});$$('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.themeChoice)));const savedTheme=(()=>{try{return localStorage.getItem(themeKey)||'system';}catch(e){return 'system';}})();applyTheme(savedTheme,false);const motionToggle=$('#motionToggle');const motionEnabled=(()=>{try{return localStorage.getItem(motionKey)!=='off';}catch(e){return true;}})();motionToggle.checked=motionEnabled;document.body.classList.toggle('motion-off',!motionEnabled);$('#motionLabel').textContent=motionEnabled?'On':'Off';motionToggle.addEventListener('change',()=>{const enabled=motionToggle.checked;document.body.classList.toggle('motion-off',!enabled);$('#motionLabel').textContent=enabled?'On':'Off';try{localStorage.setItem(motionKey,enabled?'on':'off');}catch(e){}toast('Interface motion '+(enabled?'enabled':'disabled'));});if(window.matchMedia){const scheme=window.matchMedia('(prefers-color-scheme: light)');scheme.addEventListener?.('change',()=>{let choice='system';try{choice=localStorage.getItem(themeKey)||'system';}catch(e){}if(choice==='system')applyTheme('system',false);});}
+
+const themeKey='qrscan-theme-v1';
+let settingsCloseTimer=0;
+
+function systemTheme(){
+  return window.matchMedia &&
+    window.matchMedia('(prefers-color-scheme: light)').matches
+    ? 'light'
+    : 'dark';
+}
+
+function applyTheme(choice,announce=true){
+  const resolved=choice==='system'?systemTheme():choice;
+  document.body.dataset.theme=resolved;
+  document.documentElement.style.colorScheme=resolved;
+
+  $$('[data-theme-choice]').forEach(b=>{
+    const active=b.dataset.themeChoice===choice;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-pressed',String(active));
+  });
+
+  try{
+    localStorage.setItem(themeKey,choice);
+  }catch(e){}
+
+  const meta=$('meta[name="theme-color"]');
+  if(meta) meta.content=resolved==='light'?'#f5f7fc':'#10131d';
+
+  if(announce){
+    toast(
+      (choice==='system'?'System':choice==='light'?'Light':'Dark')
+      +' mode enabled'
+    );
+  }
+}
+
+function openSettings(){
+  clearTimeout(settingsCloseTimer);
+
+  const panel=$('#settingsPanel');
+  const backdrop=$('#settingsBackdrop');
+
+  panel.hidden=false;
+  backdrop.hidden=false;
+  panel.classList.remove('is-closing');
+  panel.setAttribute('aria-hidden','false');
+  backdrop.setAttribute('aria-hidden','false');
+
+  requestAnimationFrame(()=>{
+    backdrop.classList.add('is-open');
+    panel.classList.add('is-open');
+  });
+
+  document.body.classList.add('settings-open');
+  $('#settingsToggle').setAttribute('aria-expanded','true');
+
+  setTimeout(()=>$('#settingsClose').focus(),80);
+}
+
+function closeSettings(){
+  const panel=$('#settingsPanel');
+  const backdrop=$('#settingsBackdrop');
+
+  if(panel.hidden) return;
+
+  panel.classList.remove('is-open');
+  panel.classList.add('is-closing');
+  backdrop.classList.remove('is-open');
+  panel.setAttribute('aria-hidden','true');
+  $('#settingsToggle').setAttribute('aria-expanded','false');
+  document.body.classList.remove('settings-open');
+
+  clearTimeout(settingsCloseTimer);
+
+  settingsCloseTimer=setTimeout(()=>{
+    panel.hidden=true;
+    backdrop.hidden=true;
+    panel.classList.remove('is-closing');
+  },360);
+
+  $('#settingsToggle').focus({preventScroll:true});
+}
+
+$('#settingsToggle').addEventListener('click',openSettings);
+$('#settingsClose').addEventListener('click',closeSettings);
+$('#settingsBackdrop').addEventListener('click',closeSettings);
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!$('#settingsPanel').hidden){
+    closeSettings();
+  }
+});
+
+$$('[data-theme-choice]').forEach(b=>{
+  b.addEventListener('click',()=>applyTheme(b.dataset.themeChoice));
+});
+
+const savedTheme=(()=>{
+  try{
+    return localStorage.getItem(themeKey)||'system';
+  }catch(e){
+    return 'system';
+  }
+})();
+
+applyTheme(savedTheme,false);
+
+if(window.matchMedia){
+  const scheme=window.matchMedia('(prefers-color-scheme: light)');
+
+  scheme.addEventListener?.('change',()=>{
+    let choice='system';
+
+    try{
+      choice=localStorage.getItem(themeKey)||'system';
+    }catch(e){}
+
+    if(choice==='system'){
+      applyTheme('system',false);
+    }
+  });
+}
+
 $('#menuToggle').addEventListener('click',()=>$('#nav')?.classList.toggle('mobile-open'));
 $('.menu-toggle').addEventListener('click',()=>$('.nav').classList.toggle('mobile-open'));
 $$('.nav a').forEach(a=>a.addEventListener('click',()=>$('.nav').classList.remove('mobile-open')));
