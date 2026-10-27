@@ -1,0 +1,17 @@
+{
+  "name": "QR Code Scanner",
+  "short_name": "QR Scan",
+  "description": "Scan and create QR codes and barcodes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10131d",
+  "theme_color": "#10131d",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
