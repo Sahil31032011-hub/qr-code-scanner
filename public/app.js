@@ -48,7 +48,55 @@ $$('[data-type]').forEach(b=>b.addEventListener('click',()=>{activeType=b.datase
 function getValue(){if(activeType==='url'){let v=$('#genValue').value.trim();if(v&&!/^https?:\/\//i.test(v))v='https://'+v;return v;}if(activeType==='text')return $('#genValue').value.trim();if(activeType==='wifi'){const s=$('#wifiSecurity').value,n=$('#wifiName').value,p=$('#wifiPass').value;return 'WIFI:T:'+s+';S:'+n.replace(/[\\;,:"]/g,'\\$&')+';P:'+p.replace(/[\\;,:"]/g,'\\$&')+';;';}if(activeType==='email'){const a=$('#emailAddress').value.trim(),s=$('#emailSubject').value,b=$('#emailBody').value;return 'mailto:'+a+(s||b?'?'+(s?'subject='+encodeURIComponent(s):'')+(s&&b?'&':'')+(b?'body='+encodeURIComponent(b):''):'');}if(activeType==='contact'){const n=$('#contactName').value.trim(),p=$('#contactPhone').value.trim(),e=$('#contactEmail').value.trim();return 'BEGIN:VCARD\\nVERSION:3.0\\nFN:'+n+'\\nTEL:'+p+(e?'\\nEMAIL:'+e:'')+'\\nEND:VCARD';}return $('#genValue').value.trim();}
 $('#generatorForm').addEventListener('submit',async e=>{e.preventDefault();const value=getValue();if(!value){toast('Add some content first');return;}const container=$('#generatedCode');container.innerHTML='';generatedValue=value;try{if(activeType==='barcode'){if(!window.JsBarcode)throw new Error('Barcode generator is still loading. Try again in a moment.');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');container.appendChild(svg);window.JsBarcode(svg,value,{format:$('#barcodeFormat').value,lineColor:'#111827',background:'#f1f3fa',width:2,height:95,displayValue:true,margin:8,font:'DM Mono',fontSize:13});}else{if(typeof window.QRCode!=='function')throw new Error('QR generator did not load. Check your internet connection and reload the page.');const level=$('#qrErrorLevel').value,levels=window.QRCode.CorrectLevel||{L:1,M:0,Q:3,H:2};new window.QRCode(container,{text:value,width:220,height:220,colorDark:$('#qrForeground').value,colorLight:$('#qrBackground').value,correctLevel:levels[level]??0});}$('#downloadCode').disabled=false;$('#copyCode').disabled=false;$('#shareCode').disabled=false;$('#previewSubtitle').textContent=activeType==='barcode'?'Barcode · '+$('#barcodeFormat').value:'QR code · High contrast';toast('Your code is ready to share');}catch(err){container.innerHTML='<p class="result-value" style="color:#b03d51">'+escapeHtml(err.message||'Could not generate this code')+'</p>';toast(err.message||'Could not generate code');}});
 $('#downloadCode').addEventListener('click',()=>{const svg=$('#generatedCode svg');const canvas=$('#generatedCode canvas');if(canvas){canvas.toBlob(blob=>blob&&downloadBlob(blob,'qr-code.png'));return;}if(svg){const copy=svg.cloneNode(true);copy.setAttribute('xmlns','http://www.w3.org/2000/svg');const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:'image/svg+xml;charset=utf-8'});downloadBlob(blob,'barcode.svg');}});
-$('#copyCode').addEventListener('click',()=>generatedValue&&copyText(generatedValue));$('#copyCode').addEventListener('click',async()=>{if(!generatedValue)return;try{const canvas=$('#generatedCode canvas');if(navigator.share){if(canvas&&canvas.toBlob){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));const file=blob?new File([blob],'qr-code.png',{type:'image/png'}):null;if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:'QR Scan code',text:generatedValue,files:[file]});return;}}await navigator.share({title:'QR Scan code',text:generatedValue});}else{await copyText(generatedValue);toast('Sharing is unavailable; content copied instead');}}catch(err){if(err.name!=='AbortError')toast('Could not share from this browser');}});$('#qrForeground').addEventListener('input',()=>{if(generatedValue&&activeType!=='barcode')$('#generatorForm').requestSubmit();});$('#qrBackground').addEventListener('input',()=>{if(generatedValue&&activeType!=='barcode')$('#generatorForm').requestSubmit();});$('#qrErrorLevel').addEventListener('change',()=>{if(generatedValue&&activeType!=='barcode')$('#generatorForm').requestSubmit();});
+
+$('#copyCode').addEventListener('click', () => {
+  if (generatedValue) {
+    copyText(generatedValue);
+  }
+});
+
+$('#shareCode').addEventListener('click', async () => {
+  if (!generatedValue) {
+    toast('Generate a code first');
+    return;
+  }
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: 'QR Scan code',
+        text: generatedValue
+      });
+    } else {
+      await copyText(generatedValue);
+      toast('Sharing unavailable; text/link copied instead');
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+
+    await copyText(generatedValue);
+    toast('Share unavailable; text/link copied instead');
+  }
+});
+
+$('#qrForeground').addEventListener('input', () => {
+  if (generatedValue && activeType !== 'barcode') {
+    $('#generatorForm').requestSubmit();
+  }
+});
+
+$('#qrBackground').addEventListener('input', () => {
+  if (generatedValue && activeType !== 'barcode') {
+    $('#generatorForm').requestSubmit();
+  }
+});
+
+$('#qrErrorLevel').addEventListener('change', () => {
+  if (generatedValue && activeType !== 'barcode') {
+    $('#generatorForm').requestSubmit();
+  }
+});
+
 const themeKey='qrscan-theme-v1',motionKey='qrscan-motion-v1';let settingsCloseTimer=0;function systemTheme(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}function applyTheme(choice,announce=true){const resolved=choice==='system'?systemTheme():choice;document.body.dataset.theme=resolved;document.documentElement.style.colorScheme=resolved;$$('[data-theme-choice]').forEach(b=>{const active=b.dataset.themeChoice===choice;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});try{localStorage.setItem(themeKey,choice);}catch(e){}const meta=$('meta[name="theme-color"]');if(meta)meta.content=resolved==='light'?'#f5f7fc':'#10131d';if(announce)toast((choice==='system'?'System':choice==='light'?'Light':'Dark')+' mode enabled');}function openSettings(){clearTimeout(settingsCloseTimer);const panel=$('#settingsPanel'),backdrop=$('#settingsBackdrop');panel.hidden=false;backdrop.hidden=false;panel.classList.remove('is-closing');panel.setAttribute('aria-hidden','false');backdrop.setAttribute('aria-hidden','false');requestAnimationFrame(()=>{backdrop.classList.add('is-open');panel.classList.add('is-open');});document.body.classList.add('settings-open');$('#settingsToggle').setAttribute('aria-expanded','true');setTimeout(()=>$('#settingsClose').focus(),80);}function closeSettings(){const panel=$('#settingsPanel'),backdrop=$('#settingsBackdrop');if(panel.hidden)return;panel.classList.remove('is-open');panel.classList.add('is-closing');backdrop.classList.remove('is-open');panel.setAttribute('aria-hidden','true');$('#settingsToggle').setAttribute('aria-expanded','false');document.body.classList.remove('settings-open');clearTimeout(settingsCloseTimer);settingsCloseTimer=setTimeout(()=>{panel.hidden=true;backdrop.hidden=true;panel.classList.remove('is-closing');},360);$('#settingsToggle').focus({preventScroll:true});}$('#settingsToggle').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);$('#settingsBackdrop').addEventListener('click',closeSettings);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#settingsPanel').hidden)closeSettings();});$$('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.themeChoice)));const savedTheme=(()=>{try{return localStorage.getItem(themeKey)||'system';}catch(e){return 'system';}})();applyTheme(savedTheme,false);const motionToggle=$('#motionToggle');const motionEnabled=(()=>{try{return localStorage.getItem(motionKey)!=='off';}catch(e){return true;}})();motionToggle.checked=motionEnabled;document.body.classList.toggle('motion-off',!motionEnabled);$('#motionLabel').textContent=motionEnabled?'On':'Off';motionToggle.addEventListener('change',()=>{const enabled=motionToggle.checked;document.body.classList.toggle('motion-off',!enabled);$('#motionLabel').textContent=enabled?'On':'Off';try{localStorage.setItem(motionKey,enabled?'on':'off');}catch(e){}toast('Interface motion '+(enabled?'enabled':'disabled'));});if(window.matchMedia){const scheme=window.matchMedia('(prefers-color-scheme: light)');scheme.addEventListener?.('change',()=>{let choice='system';try{choice=localStorage.getItem(themeKey)||'system';}catch(e){}if(choice==='system')applyTheme('system',false);});}
 $('#menuToggle').addEventListener('click',()=>$('#nav')?.classList.toggle('mobile-open'));
 $('.menu-toggle').addEventListener('click',()=>$('.nav').classList.toggle('mobile-open'));
