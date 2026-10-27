@@ -1,1 +1,55 @@
-const CACHE='qr-scan-shell-v3';const FILES=['/','/theme.css','/app.js','/manifest.webmanifest','/icon.svg'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{caches.open(CACHE).then(c=>c.put('/',r.clone()));return r;}).catch(async()=>await caches.match('/')||Response.error()));return;}e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r;})));});
+
+const CACHE = 'qr-scan-shell-v4';
+const BASE = self.registration.scope;
+const FILES = [
+  BASE,
+  BASE + 'index.html',
+  BASE + 'theme.css',
+  BASE + 'app.js',
+  BASE + 'manifest.webmanifest',
+  BASE + 'icon.svg'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(FILES))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(key => key !== CACHE)
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET' ||
+      url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        return (await caches.match(request)) ||
+               (await caches.match(BASE)) ||
+               Response.error();
+      })
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then(cached =>
+      cached || fetch(request)
+    )
+  );
+});
