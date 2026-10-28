@@ -8,7 +8,7 @@ pointerGlow.id = 'pointerGlow';
 pointerGlow.setAttribute('aria-hidden', 'true');
 document.body.appendChild(pointerGlow);
 
-let pointerTapTimer;
+let pointerTapTimer = null;
 
 document.addEventListener('pointermove', (event) => {
   if (event.pointerType === 'touch') return;
@@ -16,7 +16,7 @@ document.addEventListener('pointermove', (event) => {
   pointerGlow.style.left = event.clientX + 'px';
   pointerGlow.style.top = event.clientY + 'px';
   pointerGlow.classList.add('pointer-visible');
-});
+}, { passive: true });
 
 document.addEventListener('pointerdown', (event) => {
   if (event.pointerType === 'touch') return;
@@ -30,12 +30,8 @@ document.addEventListener('pointerdown', (event) => {
   pointerTapTimer = setTimeout(() => {
     pointerGlow.classList.remove('pointer-tap');
   }, 250);
-});
+}, { passive: true });
 
 document.addEventListener('pointerleave', () => {
   pointerGlow.classList.remove('pointer-visible', 'pointer-tap');
-});
-r-tap');
 }, { passive: true });
-
-})();
