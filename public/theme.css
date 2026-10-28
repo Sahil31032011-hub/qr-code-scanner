@@ -1,14 +1,14 @@
-
 /* ==========================================
-   STATIC HOME + INTERACTIVE POINTER GLOW
+   STATIC HOME PAGE + TOUCH-FRIENDLY POINTER
+   Add this at the VERY END of theme.css
 ========================================== */
 
-/* Hide intro splash */
+/* Remove the intro splash so it never blocks the page */
 .intro {
   display: none !important;
 }
 
-/* Stop automatic home-page animations */
+/* Stop automatic decorative animations on the home page */
 .topbar,
 .hero .orbit,
 .hero .orbit-two,
@@ -23,74 +23,41 @@
   animation: none !important;
 }
 
-/* Show hero content immediately */
+/* Keep home content visible without entrance animations */
 .hero .reveal,
-.hero .reveal.visible,
-.reveal,
-.reveal.visible {
+.hero .reveal.visible {
   opacity: 1 !important;
   transform: none !important;
   transition: none !important;
 }
 
-/* Keep decorative elements still */
+/* Keep the scanner preview static */
 .hero .scanner-card {
   transform: rotate(-3deg) !important;
 }
 
-.hero .float-chip,
-.hero .orbit,
-.hero .orbit-two,
+.hero .float-chip {
+  transform: none !important;
+}
+
+/* Keep the ticker still */
 .ticker-track {
   transform: none !important;
 }
 
-/* Keep scan beam stationary */
+/* Stop the decorative scan beam from moving */
 .hero .scan-beam {
   top: 50% !important;
   opacity: 1 !important;
 }
 
-/* Pointer glow follows mouse and touch */
-#pointerGlow {
-  position: fixed;
-  z-index: 9999;
-  left: 50%;
-  top: 50%;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(.7);
-  background: radial-gradient(
-    circle,
-    rgba(116, 228, 210, .22) 0%,
-    rgba(140, 157, 255, .12) 38%,
-    transparent 72%
-  );
-  transition: opacity .18s ease, transform .18s ease;
-  will-change: left, top, opacity, transform;
+/* Make the orbit circles stationary */
+.hero .orbit,
+.hero .orbit-two {
+  transform: none !important;
 }
 
-#pointerGlow.pointer-visible {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-#pointerGlow.pointer-tap {
-  transform: translate(-50%, -50%) scale(1.3);
-}
-
-/* Smaller glow on touch devices */
-@media (hover: none) {
-  #pointerGlow {
-    width: 95px;
-    height: 95px;
-  }
-}
-
-/* Comfortable taps on phones and tablets */
+/* Comfortable tapping on phones and tablets */
 button,
 a,
 input,
@@ -99,7 +66,7 @@ textarea {
   touch-action: manipulation;
 }
 
-/* Respect reduced-motion preferences */
+/* Avoid unwanted browser animations when reduced motion is requested */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -109,9 +76,7 @@ textarea {
     transition: none !important;
   }
 
-  .reveal,
-  .reveal.visible {
+  .reveal {
     opacity: 1 !important;
     transform: none !important;
   }
-}
