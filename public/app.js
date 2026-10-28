@@ -229,4 +229,71 @@ renderHistory();renderBatch();
 const revealObserver='IntersectionObserver'in window?new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');revealObserver.unobserve(entry.target);}}),{threshold:.12,rootMargin:'0px 0px -35px 0px'}):null;
 $$('.reveal').forEach((el,i)=>{if(revealObserver)revealObserver.observe(el);else el.classList.add('visible');});
 let installPrompt=null;const installButton=$('#installApp');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;installButton.hidden=false;});installButton.addEventListener('click',async()=>{if(!installPrompt){toast('Use your browser menu and choose Install app or Add to Home Screen');return;}installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;installButton.hidden=true;if(choice&&choice.outcome==='accepted')toast('App installation started');});window.addEventListener('appinstalled',()=>{installButton.hidden=true;toast('QR Scan installed successfully');});if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>toast('Offline support could not start in this browser')));
+  
+/* ==========================================
+   INTERACTIVE POINTER — MOUSE + TOUCH
+========================================== */
+
+const pointerGlow = document.createElement('div');
+pointerGlow.id = 'pointerGlow';
+pointerGlow.setAttribute('aria-hidden', 'true');
+document.body.appendChild(pointerGlow);
+
+let pointerHideTimer = null;
+let pointerTapTimer = null;
+
+function movePointerGlow(x, y) {
+  pointerGlow.style.left = `${x}px`;
+  pointerGlow.style.top = `${y}px`;
+  pointerGlow.classList.add('pointer-visible');
+}
+
+document.addEventListener('pointermove', (event) => {
+  clearTimeout(pointerHideTimer);
+  movePointerGlow(event.clientX, event.clientY);
+
+  if (event.pointerType === 'touch') {
+    pointerHideTimer = setTimeout(() => {
+      pointerGlow.classList.remove('pointer-visible');
+    }, 700);
+  }
+}, { passive: true });
+
+document.addEventListener('pointerdown', (event) => {
+  clearTimeout(pointerHideTimer);
+  clearTimeout(pointerTapTimer);
+
+  movePointerGlow(event.clientX, event.clientY);
+  pointerGlow.classList.add('pointer-tap');
+
+  pointerTapTimer = setTimeout(() => {
+    pointerGlow.classList.remove('pointer-tap');
+  }, 220);
+
+  if (event.pointerType === 'touch') {
+    pointerHideTimer = setTimeout(() => {
+      pointerGlow.classList.remove('pointer-visible');
+    }, 900);
+  }
+}, { passive: true });
+
+document.addEventListener('pointerup', (event) => {
+  if (event.pointerType === 'touch') {
+    clearTimeout(pointerHideTimer);
+    pointerHideTimer = setTimeout(() => {
+      pointerGlow.classList.remove('pointer-visible');
+    }, 700);
+  }
+}, { passive: true });
+
+document.addEventListener('pointerleave', (event) => {
+  if (event.pointerType === 'mouse') {
+    pointerGlow.classList.remove('pointer-visible', 'pointer-tap');
+  }
+}, { passive: true });
+
+document.addEventListener('pointercancel', () => {
+  pointerGlow.classList.remove('pointer-visible', 'pointer-tap');
+}, { passive: true });
+
 })();
