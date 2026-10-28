@@ -3,35 +3,42 @@
    INTERACTIVE POINTER GLOW
 ========================================== */
 
-const pointerGlow = document.createElement('div');
-pointerGlow.id = 'pointerGlow';
-pointerGlow.setAttribute('aria-hidden', 'true');
-document.body.appendChild(pointerGlow);
+(() => {
+  // Avoid creating duplicate glow elements.
+  let pointerGlow = document.getElementById('pointerGlow');
 
-let pointerTapTimer = null;
+  if (!pointerGlow) {
+    pointerGlow = document.createElement('div');
+    pointerGlow.id = 'pointerGlow';
+    pointerGlow.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(pointerGlow);
+  }
 
-document.addEventListener('pointermove', (event) => {
-  if (event.pointerType === 'touch') return;
+  let pointerTapTimer = null;
 
-  pointerGlow.style.left = event.clientX + 'px';
-  pointerGlow.style.top = event.clientY + 'px';
-  pointerGlow.classList.add('pointer-visible');
-}, { passive: true });
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType === 'touch') return;
 
-document.addEventListener('pointerdown', (event) => {
-  if (event.pointerType === 'touch') return;
+    pointerGlow.style.left = `${event.clientX}px`;
+    pointerGlow.style.top = `${event.clientY}px`;
+    pointerGlow.classList.add('pointer-visible');
+  }, { passive: true });
 
-  pointerGlow.style.left = event.clientX + 'px';
-  pointerGlow.style.top = event.clientY + 'px';
-  pointerGlow.classList.add('pointer-visible', 'pointer-tap');
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch') return;
 
-  clearTimeout(pointerTapTimer);
+    pointerGlow.style.left = `${event.clientX}px`;
+    pointerGlow.style.top = `${event.clientY}px`;
+    pointerGlow.classList.add('pointer-visible', 'pointer-tap');
 
-  pointerTapTimer = setTimeout(() => {
-    pointerGlow.classList.remove('pointer-tap');
-  }, 250);
-}, { passive: true });
+    clearTimeout(pointerTapTimer);
 
-document.addEventListener('pointerleave', () => {
-  pointerGlow.classList.remove('pointer-visible', 'pointer-tap');
-}, { passive: true });
+    pointerTapTimer = setTimeout(() => {
+      pointerGlow.classList.remove('pointer-tap');
+    }, 250);
+  }, { passive: true });
+
+  document.addEventListener('pointerleave', () => {
+    pointerGlow.classList.remove('pointer-visible', 'pointer-tap');
+  }, { passive: true });
+})();
